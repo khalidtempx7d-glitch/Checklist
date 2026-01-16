@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obs & Gynae Course Tracker</title>
+    <style>
+        :root {
+            --primary: #008080; /* Medical Teal */
+            --primary-light: #e6f2f2;
+            --secondary: #2c3e50;
+            --accent: #e74c3c;
+            --success: #27ae60;
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --text: #333333;
+            --text-light: #777777;
+            --border-radius: 12px;
+            --shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding-bottom: 80px; /* Space for FAB */
+        }
+
+        /* --- Header & Top Stats --- */
+        header {
+            background: linear-gradient(135deg, var(--primary), #005f5f);
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        h1 { font-size: 1.8rem; margin-bottom: 0.5rem; font-weight: 700; }
+        .subtitle { font-size: 0.9rem; opacity: 0.9; margin-bottom: 1.5rem; }
+
+        .top-stats {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        /* Circular Progress */
+        .progress-circle {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: conic-gradient(var(--success) 0%, rgba(255,255,255,0.2) 0%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            transition: background 0.5s ease;
+        }
+
+        .progress-circle::before {
+            content: attr(data-percent);
+            position: absolute;
+            width: 85px;
+            height: 85px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .stat-text {
+            text-align: left;
+        }
+        .stat-text h2 { font-size: 2rem; line-height: 1; }
+        .stat-text p { font-size: 0.9rem; opacity: 0.9; }
+
+        /* --- Main Dashboard --- */
+        main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Section Cards */
+        .section-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            border-left: 5px solid var(--primary);
+            transition: transform 0.2s;
+        }
+        
+        .section-card:hover { transform: translateY(-2px); }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+
+        .card-title { font-size: 1.2rem; font-weight: 600; color: var(--secondary); }
+        .card-stats { font-size: 0.9rem; font-weight: bold; color: var(--primary); }
+
+        /* Linear Progress Bar */
+        .progress-bar-bg {
+            background: #eee;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--success);
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        /* Checkbox List */
+        .checklist {
+            list-style: none;
+            display: none; /* Hidden by default, toggled via JS */
+        }
+        .checklist.open { display: block; }
+
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .checklist-item:hover { background-color: var(--primary-light); }
+
+        .custom-checkbox {
+            min-width: 20px;
+            height: 20px;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            margin-right: 12px;
+            margin-top: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        /* Checked State */
+        .checklist-item.checked .custom-checkbox {
+            background-color: var(--success);
+            border-color: var(--success);
+        }
+        .checklist-item.checked .custom-checkbox::after {
+            content: '✔';
+            color: white;
+            font-size: 14px;
+        }
+        .checklist-item.checked span {
+            text-decoration: line-through;
+            color: var(--text-light);
+        }
+
+        .sub-group-header {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-light);
+            margin: 1rem 0 0.5rem 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- Controls --- */
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+            gap: 1rem;
+        }
+        
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-upload { background: var(--secondary); color: white; }
+        .btn-upload:hover { background: #1a252f; }
+
+        /* Floating Action Button (FAB) */
+        .fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--primary);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: transform 0.2s;
+            border: none;
+            z-index: 100;
+        }
+        .fab:hover { transform: scale(1.1); background: #006666; }
+        .fab:active { transform: scale(0.95); }
+
+        /* File Input Hidden */
+        #fileInput { display: none; }
+
+        /* Toast Notification */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 101;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+        }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+
+        /* Loading State */
+        .loading { text-align: center; color: var(--text-light); margin-top: 2rem; }
+        .error { text-align: center; color: var(--accent); margin-top: 2rem; padding: 1rem; border: 1px solid var(--accent); border-radius: 8px; display: none; }
+
+        @media (max-width: 600px) {
+            .top-stats { flex-direction: column; gap: 1rem; }
+            .fab { width: 50px; height: 50px; font-size: 1.2rem; bottom: 20px; right: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Obs & Gynae Curriculum</h1>
+        <div class="subtitle">Course Progress Tracker</div>
+        
+        <div class="top-stats">
+            <div class="progress-circle" id="overallCircle" data-percent="0%"></div>
+            <div class="stat-text">
+                <h2 id="totalCount">0/0</h2>
+                <p>Items Completed</p>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Error Message -->
+        <div id="errorBlock" class="error">
+            <p><strong>Could not load progress.md automatically.</strong></p>
+            <p>If you are running this locally (double clicking the file), please use the button below to upload your <code>progress.md</code>.</p>
+        </div>
+
+        <!-- Fallback Upload Button -->
+        <div class="controls" id="uploadControls">
+            <button class="btn btn-upload" onclick="document.getElementById('fileInput').click()">
+                📂 Load progress.md
+            </button>
+            <input type="file" id="fileInput" accept=".md" onchange="handleFileUpload(this)">
+        </div>
+
+        <div id="contentArea" style="display: none;">
+            <!-- Content injected by JS -->
+        </div>
+        
+        <div id="loading" class="loading">Loading progress.md...</div>
+    </main>
+
+    <!-- Floating Action Button for Export -->
+    <button class="fab" onclick="exportMarkdown()" title="Save / Export Markdown">
+        💾
+    </button>
+
+    <!-- Toast -->
+    <div id="toast">Markdown copied to clipboard! Paste it into progress.md</div>
+
+    <script>
+        // --- Data Structure ---
+        let courseData = {
+            title: "Course Curriculum",
+            sections: []
+        };
+
+        // --- Parser Logic ---
+        function parseMarkdown(text) {
+            const lines = text.split('\n');
+            const data = { sections: [] };
+            let currentSection = null;
+            let currentSubGroup = null;
+
+            // Helper to add item to current structure
+            const addItem = (line, checked) => {
+                // Remove the checkbox syntax (- [ ] or - [x]) and trim
+                let content = line.replace(/-\s\[[x\s]\]\s*/, '').trim();
+                
+                // Determine if it belongs to a section or the root
+                let target = currentSubGroup ? currentSubGroup : currentSection;
+                
+                if (target) {
+                    target.items.push({
+                        text: content,
+                        checked: checked,
+                        originalLine: line // Keep original to reconstruct later
+                    });
+                }
+            };
+
+            lines.forEach(line => {
+                const trimmedLine = line.trim();
+
+                // Detect Headers (e.g., SECTION 1, Course Basics)
+                // Matches lines that look like titles: Uppercase start, "Course", "SECTION", "TUTORIALS"
+                if (/^(SECTION|COURSE|TUTORIALS)/i.test(trimmedLine) || 
+                   (trimmedLine.startsWith("▪️") && trimmedLine.includes("Course Basics"))) {
+                    
+                    currentSection = {
+                        title: trimmedLine.replace(/▪️/g, '').trim(),
+                        items: [],
+                        subGroups: []
+                    };
+                    currentSubGroup = null;
+                    data.sections.push(currentSection);
+                }
+                
+                // Detect Subgroups (Start with 🔹 and aren't just bullets)
+                else if (trimmedLine.startsWith("🔹") && currentSection) {
+                    currentSubGroup = {
+                        title: trimmedLine.replace(/🔹/g, '').trim(),
+                        items: []
+                    };
+                    currentSection.subGroups.push(currentSubGroup);
+                }
+
+                // Detect Checkboxes
+                else if (trimmedLine.match(/-\s\[x\]/i)) {
+                    addItem(trimmedLine, true);
+                }
+                else if (trimmedLine.match(/-\s\[\s\]/)) {
+                    addItem(trimmedLine, false);
+                }
+
+                // Detect Dividers (Reset subgroups? Usually visual only)
+            });
+
+            return data;
+        }
+
+        // --- Render Logic ---
+        function renderDashboard() {
+            const container = document.getElementById('contentArea');
+            container.innerHTML = '';
+
+            let totalItems = 0;
+            let totalChecked = 0;
+
+            courseData.sections.forEach((section, sIndex) => {
+                // Calculate Section Stats
+                let secTotal = 0;
+                let secChecked = 0;
+                
+                // Collect all items for easy counting
+                let allSectionItems = [];
+                
+                // Add main section items
+                section.items.forEach(i => allSectionItems.push(i));
+                // Add subgroup items
+                section.subGroups.forEach(g => g.items.forEach(i => allSectionItems.push(i)));
+
+                allSectionItems.forEach(item => {
+                    secTotal++;
+                    if (item.checked) secChecked++;
+                });
+
+                // Update Global Stats
+                totalItems += secTotal;
+                totalChecked += secChecked;
+
+                // Create HTML Elements
+                const card = document.createElement('div');
+                card.className = 'section-card';
+                
+                const percent = secTotal === 0 ? 0 : Math.round((secChecked / secTotal) * 100);
+
+                // Card Header
+                const headerHtml = `
+                    <div class="card-header" onclick="toggleSection(${sIndex})">
+                        <span class="card-title">${section.title}</span>
+                        <span class="card-stats">${secChecked}/${secTotal} (${percent}%)</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" style="width: ${percent}%"></div>
+                    </div>
+                `;
+
+                // Card Body (Checklist)
+                let bodyHtml = `<ul class="checklist" id="list-${sIndex}">`;
+
+                // Render Main Items
+                section.items.forEach((item, iIndex) => {
+                    bodyHtml += createItemHtml(section, 'items', iIndex);
+                });
+
+                // Render Subgroups
+                section.subGroups.forEach((group, gIndex) => {
+                    bodyHtml += `<li class="sub-group-header">🔹 ${group.title}</li>`;
+                    group.items.forEach((item, iIndex) => {
+                        bodyHtml += createItemHtml(section, `subGroups[${gIndex}].items`, iIndex);
+                    });
+                });
+
+                bodyHtml += `</ul>`;
+
+                card.innerHTML = headerHtml + bodyHtml;
+                container.appendChild(card);
+            });
+
+            // Update Top Stats
+            document.getElementById('totalCount').textContent = `${totalChecked}/${totalItems}`;
+            const overallPercent = totalItems === 0 ? 0 : Math.round((totalChecked / totalItems) * 100);
+            const circle = document.getElementById('overallCircle');
+            circle.setAttribute('data-percent', overallPercent + '%');
+            circle.style.background = `conic-gradient(var(--success) ${overallPercent}%, rgba(255,255,255,0.2) 0%)`;
+        }
+
+        function createItemHtml(section, path, index) {
+            // Helper to navigate the object structure dynamically based on path string
+            let item;
+            if (path === 'items') item = section.items[index];
+            else {
+                // Parse "subGroups[0].items"
+                const gIndex = parseInt(path.match(/\d+/)[0]);
+                item = section.subGroups[gIndex].items[index];
+            }
+
+            const checkedClass = item.checked ? 'checked' : '';
+            // We encode path and index in the onclick handler
+            const onClick = `toggleItem('${path}', ${index})`;
+
+            return `
+                <li class="checklist-item ${checkedClass}" onclick="${onClick}">
+                    <div class="custom-checkbox"></div>
+                    <span>${item.text}</span>
+                </li>
+            `;
+        }
+
+        // --- Interactions ---
+
+        function toggleSection(index) {
+            const list = document.getElementById(`list-${index}`);
+            list.classList.toggle('open');
+        }
+
+        function toggleItem(path, index) {
+            // Update Data Model
+            // Since we don't have a robust path resolution for the root object in this simple script,
+            // we'll iterate to find the specific item to toggle to keep it simple and robust.
+            // Alternatively, parsing the path string strictly.
+            
+            let found = false;
+            
+            courseData.sections.forEach(section => {
+                if (found) return;
+                
+                // Check main items
+                if (path === 'items') {
+                    if (section.items[index]) {
+                        section.items[index].checked = !section.items[index].checked;
+                        found = true;
+                    }
+                } else {
+                    // Check subgroups
+                    const gIndex = parseInt(path.match(/\d+/)[0]);
+                    if (section.subGroups[gIndex] && section.subGroups[gIndex].items[index]) {
+                        section.subGroups[gIndex].items[index].checked = !section.subGroups[gIndex].items[index].checked;
+                        found = true;
+                    }
+                }
+            });
+
+            if (found) {
+                renderDashboard(); // Re-render to update UI and stats
+                // Keep the section open? No, renderDashboard closes all. Let's fix that.
+                // For simplicity in this standalone, we just re-render. 
+                // Ideally we'd toggle class only, but re-calculating stats requires logic.
+                // Optimization: Only update DOM classes and calc stats manually? 
+                // For now, re-rendering is fast enough for a list of this size.
+                
+                // Re-open the active section logic could go here, but let's keep it simple.
+                // Let's auto-expand the section that was just clicked for better UX.
+                // We need to know which section contained the item. 
+                // Simplification: Just re-render.
+            }
+        }
+
+        function toggleSection(index) {
+             // This function is called on click, but we re-render in toggleItem.
+             // If we are just opening/collapsing without checking items:
+             const list = document.getElementById(`list-${index}`);
+             if(list) list.classList.toggle('open');
+        }
+        
+        // Override toggleItem to not re-render everything, just update class and stats
+        function toggleItem(path, index) {
+            // Find item
+            let item = null;
+            let sectionIndex = -1;
+
+            courseData.sections.forEach((sec, sIdx) => {
+                if (item !== null) return;
+                if (path === 'items') {
+                    if (sec.items[index]) { item = sec.items[index]; sectionIndex = sIdx; }
+                } else {
+                    const gIndex = parseInt(path.match(/\d+/)[0]);
+                    if (sec.subGroups[gIndex] && sec.subGroups[gIndex].items[index]) {
+                        item = sec.subGroups[gIndex].items[index];
+                        sectionIndex = sIdx;
+                    }
+                }
+            });
+
+            if (item) {
+                item.checked = !item.checked;
+                
+                // Update UI class directly (Performance)
+                const ul = document.getElementById(`list-${sectionIndex}`);
+                // Find the specific li. This is tricky without IDs on LIs.
+                // Re-rendering the specific section is safer/easier here.
+                renderSectionStatsOnly(); // Recalculate top stats
+                
+                // Simple DOM update based on event bubbling isn't easy with structure separation.
+                // Let's actually just re-render. It's < 100 items, it's instant.
+                renderDashboard();
+                // Restore open state of lists
+                document.querySelectorAll('.checklist').forEach(el => el.classList.add('open'));
+            }
+        }
+
+        function renderSectionStatsOnly() {
+            // Just for the top circle
+             let totalItems = 0;
+             let totalChecked = 0;
+             courseData.sections.forEach(section => {
+                 section.items.forEach(i => { totalItems++; if(i.checked) totalChecked++; });
+                 section.subGroups.forEach(g => g.items.forEach(i => { totalItems++; if(i.checked) totalChecked++; }));
+             });
+             const overallPercent = totalItems === 0 ? 0 : Math.round((totalChecked / totalItems) * 100);
+             const circle = document.getElementById('overallCircle');
+             circle.setAttribute('data-percent', overallPercent + '%');
+             circle.style.background = `conic-gradient(var(--success) ${overallPercent}%, rgba(255,255,255,0.2) 0%)`;
+             document.getElementById('totalCount').textContent = `${totalChecked}/${totalItems}`;
+        }
+
+        // --- Import/Export ---
+
+        function handleFileUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                courseData = parseMarkdown(text);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('errorBlock').style.display = 'none';
+                document.getElementById('contentArea').style.display = 'block';
+                renderDashboard();
+                document.querySelectorAll('.checklist').forEach(el => el.classList.add('open'));
+            };
+            reader.readAsText(file);
+        }
+
+        function exportMarkdown() {
+            let md = "Course Basics:\n\n";
+            // Reconstruct logic based on original structure somewhat, 
+            // or just iterate our data structure to generate clean markdown.
+            
+            // Since we lost the exact formatting of the dividers and links in the parser (simplified),
+            // we will generate a clean standard markdown version.
+            
+            courseData.sections.forEach(sec => {
+                md += `〰️〰️〰️\n\n`;
+                md += `## ${sec.title}\n\n`;
+                
+                sec.items.forEach(item => {
+                    const check = item.checked ? '[x]' : '[ ]';
+                    md += `- ${check} ${item.text}\n`;
+                });
+                
+                sec.subGroups.forEach(group => {
+                    md += `🔹 ${group.title}\n`;
+                    group.items.forEach(item => {
+                        const check = item.checked ? '[x]' : '[ ]';
+                        md += `- ${check} ${item.text}\n`;
+                    });
+                    md += `\n`;
+                });
+            });
+
+            // Copy to clipboard
+            navigator.clipboard.writeText(md).then(() => {
+                showToast();
+            }, (err) => {
+                alert('Failed to copy: ' + err);
+            });
+        }
+
+        function showToast() {
+            const x = document.getElementById("toast");
+            x.className = "show";
+            setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
+        }
+
+        // --- Init ---
+        // Try to fetch from server
+        fetch('progress.md')
+            .then(response => {
+                if (!response.ok) throw Error("File not found");
+                return response.text();
+            })
+            .then(text => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('uploadControls').style.display = 'none'; // Hide upload if successful
+                courseData = parseMarkdown(text);
+                document.getElementById('contentArea').style.display = 'block';
+                renderDashboard();
+                document.querySelectorAll('.checklist').forEach(el => el.classList.add('open'));
+            })
+            .catch(err => {
+                console.log("Fetch failed (likely local file):", err);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('errorBlock').style.display = 'block';
+            });
+
+    </script>
+</body>
+</html>
