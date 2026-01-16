@@ -1,6 +1,6 @@
 ▪️ [Time Table  1 / Time Table  2  ] | [Objectives] | [Intro Session]
-- [ ] ▪️  History & Examination (Obs & Gynae)
-- [ ] ▪️  History & Examination (Specific to Obs)
+- [x] ▪️  History & Examination (Obs & Gynae)
+- [x] ▪️  History & Examination (Specific to Obs)
 - [ ] ▪️  Diagnostic Procedures
 - [ ] ▪️  Ethics in Obs/Gyn
 - [ ] ▪️  Obs & Gyn Imaging / 
